@@ -1,14 +1,23 @@
 ---
-title: "MS_Covid"
-author: "Hunter York"
-date: "7/23/2020"
 output:
-  ioslides_presentation: default
-  beamer_presentation: default
+  slidy_presentation: default
+  html_notebook: default
 ---
 
+## Introduction
+
+The following slides use data sourced from the Mississippi State Department of Health. Data are synthesized by Johns Hopkins University and are available here: [https://github.com/CSSEGISandData/COVID-19]. Code to reproduce these graphs is maintained here: [https://github.com/hunterwyork/ms_covid_viz]. The code can easily be adopted for any state.
+
+These slides are automatically updated. The most recent date of data is visible in the titles of several slides
+
+## Introduction, cont.
+
+All cases are as reported by the MSDH. Cases and case rates do not represent the true number of infected individuals in the state. Rather, they reflect availability of testing, testing usage, and actual infection rates. Better metrics for tracking the progress of the pandemic include death rates, hospitalization rates, and testing positivity rates. Only the former was available easily in this data and is included here. 
+
+All questions can be directed to hunterwyork [at] gmail [dot] com
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = F, warning = FALSE, message = FALSE, fig.align = "center")
 library(dplyr)
 library(data.table)
 library(readr)
@@ -20,12 +29,20 @@ library(gganimate)
 library(transformr)
 library(gifski)
 library(ggrepel)
+library(magrittr)
 
 files_root <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports_us/"
 
 c.state <- "Mississippi"
 
-today <-  Sys.Date() %>% as.Date()-1
+# create today variable dependent on the time of day
+if (Sys.time() %>% 
+    substr(12, 13) %>% 
+    as.numeric >= 20){
+  today <-  Sys.Date() %>% as.Date()-1} else {
+    today <-  Sys.Date() %>% as.Date()-2
+  }
+
 #beginning date can go back to April 12
 beginning_date <- "2020-06-01" %>% as.Date()
 
@@ -54,6 +71,18 @@ county_data_long <- melt(county_data[Province_State == c.state],
 county_data_long[, Population := mean(Population, na.rm = T),
                  .(FIPS, Province_State, variable)]
 
+# reformat date variable
+county_data_long[, date_std := as.Date(variable,format="%m/%d/%y")]
+
+## make sure data variable is in order
+county_data_long <- county_data_long[order(date_std)]
+
+# Make a new cases/ new deaths indicator
+temp <- county_data_long[measure %in% c("cases", "deaths")]
+temp[, value := value - lag(value), by = .(FIPS, measure)]
+temp[, measure := paste0("new_", measure)]
+county_data_long <- rbind(county_data_long, temp)
+
 # create case and death rates
 rates_long <- copy(county_data_long)
 rates_long[, value := value/Population]
@@ -62,20 +91,19 @@ rates_long[, measure := paste0(measure, "_rate")]
 # and append to data
 county_data_long <- rbindlist(list(county_data_long, rates_long))
 
-saveRDS(county_data_long, "C:/Users/hyork/Desktop/covid_maps/county_data_long.rds")
-
-county_data_long <- read_rds("C:/Users/hyork/Desktop/covid_maps/county_data_long.rds")
-
-# reformat date variable
-county_data_long[, date_std := as.Date(variable,format="%m/%d/%y")]
-
-# now load in a shapefile
-# shp <- counties(state = str_sub(rates_long[1,FIPS], 1, -4),
-#                 cb = TRUE)
+# saveRDS(county_data_long, "C:/Users/hyork/Desktop/covid_maps/county_data_long.rds")
 # 
-# saveRDS(shp, "C:/Users/hyork/Desktop/covid_maps/shp.rds")
+# county_data_long <- read_rds("C:/Users/hyork/Desktop/covid_maps/county_data_long.rds")
 
-shp <- read_rds("C:/Users/hyork/Desktop/covid_maps/shp.rds")
+
+#now load in a shapefile
+shp <- counties(state = str_sub(rates_long[1,FIPS], 1, -4),
+                cb = TRUE)
+
+#saveRDS(shp, "shp.rds")
+
+
+#shp <- read_rds("C:/Users/hyork/Desktop/covid_maps/shp.rds")
 
 # merge onto county data
 shp$GEOID <- shp$GEOID %>% as.numeric()
@@ -84,18 +112,18 @@ county_data_long_shp <- merge(county_data_long, shp,
                               by.y = "GEOID") %>% data.table()
 ```
 
-## Total Cases as of `r today-1`
+## Total Cases as of `r today`
 
 ```{r, echo = F, message = FALSE}
 #preserve max value for plotting
-county_data_long_shp[measure == "cases" & date_std == today-1]$value %>% max() -> max_value
-county_data_long_shp[measure == "cases" & date_std == today-1]$value %>% min() -> min_value
+county_data_long_shp[measure == "cases" & date_std == today]$value %>% max() -> max_value
+county_data_long_shp[measure == "cases" & date_std == today]$value %>% min() -> min_value
 
 #create scale breaks
 c(min_value,100,1000,3000,max_value) -> scale_breaks
 
 # plot
-gg1 <- ggplot(county_data_long_shp[measure == "cases" & date_std == today-1]) + 
+gg1 <- ggplot(county_data_long_shp[measure == "cases" & date_std == today]) + 
   geom_sf(aes(fill = value, geometry = geometry), lwd = .25) + 
   theme_classic() +
   scale_fill_viridis_c(trans = scales::log10_trans(), breaks = scale_breaks, 
@@ -114,18 +142,18 @@ print(gg1)
 
 ```
 
-## Total Deaths Attributable to Covid as of `r today-1`
+## Total Deaths Attributable to Covid as of `r today`
 
 ```{r, echo = F, message = FALSE}
 #preserve max value for plotting
-county_data_long_shp[measure == "deaths" & date_std == today-1]$value %>% max() -> max_value
-county_data_long_shp[measure == "deaths" & date_std == today-1]$value %>% min() -> min_value
+county_data_long_shp[measure == "deaths" & date_std == today]$value %>% max() -> max_value
+county_data_long_shp[measure == "deaths" & date_std == today]$value %>% min() -> min_value
 
 #create scale breaks
 c(min_value, 2^(1:5), max_value) -> scale_breaks
 
 # plot
-gg2 <- ggplot(county_data_long_shp[measure == "deaths" & date_std == today-1]) + 
+gg2 <- ggplot(county_data_long_shp[measure == "deaths" & date_std == today]) + 
   geom_sf(aes(fill = value, geometry = geometry), lwd = .25) + 
   theme_classic() +
   scale_fill_viridis_c(option = "A",
@@ -145,18 +173,18 @@ print(gg2)
 
 ```
 
-## Total Confirmed Cases of Covid per 1,000 residents as of `r today-1`
+## Total Confirmed Cases of Covid per 1,000 residents as of `r today`
 
 ```{r, echo = F, message = FALSE}
 #preserve max value for plotting
-county_data_long_shp[measure == "cases_rate" & date_std == today-1]$value %>% max() -> max_value
-county_data_long_shp[measure == "cases_rate" & date_std == today-1]$value %>% min() -> min_value
+county_data_long_shp[measure == "cases_rate" & date_std == today]$value %>% max() -> max_value
+county_data_long_shp[measure == "cases_rate" & date_std == today]$value %>% min() -> min_value
 
 #create scale breaks
 round(c(seq(0, .04, .005), max_value)*1000, 3) -> scale_breaks
 
 # plot
-gg4 <- ggplot(county_data_long_shp[measure == "cases_rate" & date_std == today-1]) + 
+gg4 <- ggplot(county_data_long_shp[measure == "cases_rate" & date_std == today]) + 
   geom_sf(aes(fill = value*1000, geometry = geometry), lwd = .25) + 
   theme_classic() +
   scale_fill_viridis_c(breaks = scale_breaks,
@@ -177,18 +205,18 @@ print(gg4)
 
 
 
-## Total Deaths Attributable to Covid per 1,000 residents as of `r today-1`
+## Total Deaths Attributable to Covid per 1,000 residents as of `r today`
 
 ```{r, echo = F, message = FALSE}
 #preserve max value for plotting
-county_data_long_shp[measure == "deaths_rate" & date_std == today-1]$value %>% max() -> max_value
-county_data_long_shp[measure == "deaths_rate" & date_std == today-1]$value %>% min() -> min_value
+county_data_long_shp[measure == "deaths_rate" & date_std == today]$value %>% max() -> max_value
+county_data_long_shp[measure == "deaths_rate" & date_std == today]$value %>% min() -> min_value
 
 #create scale breaks
 round(c(seq(0, .002, .0005), max_value)*1000, 3) -> scale_breaks
 
 # plot
-gg3 <- ggplot(county_data_long_shp[measure == "deaths_rate" & date_std == today-1]) + 
+gg3 <- ggplot(county_data_long_shp[measure == "deaths_rate" & date_std == today]) + 
   geom_sf(aes(fill = value*1000, geometry = geometry), lwd = .25) + 
   theme_classic() +
   scale_fill_viridis_c(option = "A",
@@ -208,7 +236,11 @@ gg3 <- ggplot(county_data_long_shp[measure == "deaths_rate" & date_std == today-
 print(gg3)
 ```
 
+## Regional Trends: Introduction
+
 ```{r, echo = F, message = FALSE}
+
+
 ## Assign north, central and southern MS variables
 county_data_long <- county_data_long[Lat != 0]
 county_data_long[Lat <= min(Lat) + ((max(Lat) - min(Lat))/3) & Lat != 0, region := "South"]
@@ -218,19 +250,87 @@ county_data_long[Lat > min(Lat) + ((max(Lat) - min(Lat))/1.5) & Lat != 0, region
 county_data_long[Long_ <= min(Long_) + ((max(Long_) - min(Long_))/2) & Long_ != 0, region2 := "western"]
 county_data_long[Long_ > min(Long_) + ((max(Long_) - min(Long_))/2) & Long_ != 0, region2 := "eastern"]
 
+#map counties by region
+merge(unique(county_data_long[,.(region, region2, FIPS)]) , shp, 
+                              by.x = "FIPS", 
+                              by.y = "GEOID") %>% data.table()  -> regions_county
+regions_county[, region_cat := paste0(region, region2)]
+
+ggplot(regions_county) + 
+  geom_sf(aes(fill = region_cat, geometry = geometry)) + 
+  labs(title = "Regions As Defined For the Purposes of This Analysis",
+       legend = "Region") + 
+  theme_void()
+```
+
+## Regional Trends in New Covid Incident Cases/Day
+
+```{r, echo = F, message = FALSE}
+
+#now make logged variables
+for (lag_day in 1:6){
+  county_data_long[, paste0("lag_", lag_day, "_value") := data.table::shift(value, lag_day, type = "lag"), by = .(FIPS, measure)]
+}
+
+#now make weighted value of past week
+county_data_long[, mean_lag_value := (value + lag_1_value + lag_2_value + lag_3_value + lag_4_value + lag_5_value + lag_6_value )/ 7, by = .(FIPS, measure, date_std)]
+
+#collapse to state and region
+county_data_long_state <- county_data_long[,.(mean_lag_value = sum(mean_lag_value), value = sum(value), population = sum(Population)), by =.(date_std, measure)]
+
+county_data_long_region <- county_data_long[,.(mean_lag_value = sum(mean_lag_value), value = sum(value), population = sum(Population)), by =.(date_std, measure, region, region2)]
+
+county_data_long_region[, region_cat := paste0(region, "", region2)]
+county_data_long_region <- rbind(county_data_long_region, county_data_long_state, fill = T)
+county_data_long_region[is.na(region_cat), region_cat := "State"]
+county_data_long_region[region_cat == "State", state := "State"]
+county_data_long_region[region_cat != "State", state := "Regional"]
+
+ggplot(county_data_long_region[measure == "new_cases" & date_std >= "2020-04-01"  & date_std %in% c(today, seq.Date(as.Date("2020-04-01"), today, 1))]) + geom_line( aes(x = date_std, y = mean_lag_value, group = region_cat, color = region_cat)) +
+      theme_bw()+
+     # ylim(0, 0.042*1000) + 
+      labs(x = "Date", y = "New Reported Laboratory-Confirmed Cases/Day", title = "Regional Overview of the Daily Incidence of New Cases\nOnly Considering Reported and Laboratory-Confirmed Cases\nActual Cases Are Presumed to be Exponentially Higher")+
+      theme(legend.position = "none", axis.text.x = element_text(angle = 90)) +
+      geom_text_repel(data = county_data_long_region[measure == "new_cases" & date_std == today], aes(x = date_std, y = mean_lag_value, label =region_cat, group = region_cat, color = region_cat), nudge_x = 25) + 
+  scale_x_date(limits = c(as.Date("2020-04-01"), today + 50))+
+
+    facet_wrap(~state, scales = "free_y", nrow = 2)
+  
+
+
+```
+
+## Regional Trends in Covid Deaths/Day Over Time
+
+```{r}
+ggplot(county_data_long_region[measure == "new_deaths" & date_std >= "2020-04-01"  & date_std %in% c(today, seq.Date(as.Date("2020-04-01"), today, 1))]) + geom_line( aes(x = date_std, y = mean_lag_value, group = region_cat, color = region_cat)) +
+    theme_bw()+
+    # ylim(0, 0.042*1000) + 
+    labs(x = "Date", y = "Deaths Per Day", title = "")+
+    theme(legend.position = "none", axis.text.x = element_text(angle = 90)) +
+    geom_text_repel(data = county_data_long_region[measure == "new_deaths" & date_std == today], aes(x = date_std, y = mean_lag_value, label =region_cat, group = region_cat, color = region_cat), nudge_x = 25) +
+    xlim(as.Date("2020-04-01"), today + 50)+
+    facet_wrap(~state, scales = "free_y", nrow = 2) #+ 
+  # scale_x_continuous(labels = c(today, seq.Date(as.Date("2020-04-01"), today, 10), rep("", 10)), breaks = c(today, seq.Date(as.Date("2020-04-01"), today+100, 10)))
+
+```
+
+```{r}
+#make sure variable is in order
 
 n <- 0
 gg_traj_list <- list()
 for(i in unique(county_data_long$region)){
   for(ii in unique(county_data_long$region2)){
     n <- n + 1
-    gg_traj_list[[n]] <- ggplot(county_data_long[measure == "cases_rate" & date_std >= "2020-04-01" & region == i & region2 == ii & date_std %in% c(today-1, seq.Date(as.Date("2020-04-01"), today-1, 5))]) + 
-      geom_line(aes(x = variable, y = value*1000, group = Admin2, color = Admin2)) +
+    gg_traj_list[[n]] <- ggplot(county_data_long[measure == "new_cases" & date_std >= "2020-04-01" & region == i & region2 == ii & date_std %in% c(today, seq.Date(as.Date("2020-04-01"), today, 5))]) + 
+      geom_line(aes(x = date_std, y = mean_lag_value, group = Admin2, color = Admin2)) +
       theme_bw()+
-      ylim(0, 0.042*1000) + 
-      labs(x = "Date", y = "Confirmed Cases/1,000", title = paste0(i,ii," ", c.state))+
+     # ylim(0, 0.042*1000) + 
+          xlim(as.Date("2020-04-01"), today + 50)+
+      labs(x = "Date", y = "Confirmed Cases (7-day Average)", title = paste0(i,ii," ", c.state))+
       theme(legend.position = "none", axis.text.x = element_text(angle = 90)) +
-      geom_text_repel(data = county_data_long[measure == "cases_rate" & date_std == max(date_std) & region == i & region2 == ii], aes(x = variable, y = value*1000, label = Admin2, color = Admin2))
+      geom_text_repel(data = county_data_long[measure == "new_cases" & date_std == max(date_std) & region == i & region2 == ii], aes(x = date_std, y = mean_lag_value, label = Admin2, color = Admin2), nudge_x = 25)
   }
 }
 
@@ -272,38 +372,321 @@ print(gg_traj_list[[5]])
 print(gg_traj_list[[6]])
 ```
 
-## Development of Confirmed Cases Over the Past 2 Months
+```{r}
+#make sure variable is in order
+
+n <- 0
+gg_traj_list <- list()
+for(i in unique(county_data_long$region)){
+  for(ii in unique(county_data_long$region2)){
+    n <- n + 1
+    gg_traj_list[[n]] <- ggplot(county_data_long[measure == "new_cases_rate" & date_std >= "2020-04-01" & region == i & region2 == ii & date_std %in% c(today, seq.Date(as.Date("2020-04-01"), today, 5))]) + 
+      geom_line(aes(x = date_std, y = mean_lag_value, group = Admin2, color = Admin2)) +
+      theme_bw()+
+     # ylim(0, 0.042*1000) + 
+          xlim(as.Date("2020-04-01"), today + 50)+
+      labs(x = "Date", y = "Confirmed Cases/1,000 People (7-day Average)", title = paste0(i,ii," ", c.state))+
+      theme(legend.position = "none", axis.text.x = element_text(angle = 90)) +
+      geom_text_repel(data = county_data_long[measure == "new_cases_rate" & date_std == max(date_std) & region == i & region2 == ii], aes(x = date_std, y = mean_lag_value, label = Admin2, color = Admin2), nudge_x = 25)
+  }
+}
+
+```
+
+## Regional Case Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[1]])
+```
+
+## Regional Case Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[2]])
+```
+
+## Regional Case Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[3]])
+```
+
+## Regional Case Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[4]])
+```
+
+## Regional Case Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[5]])
+```
+
+## Regional Case Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[6]])
+```
+
+```{r}
+#make sure variable is in order
+
+n <- 0
+gg_traj_list <- list()
+for(i in unique(county_data_long$region)){
+  for(ii in unique(county_data_long$region2)){
+    n <- n + 1
+    gg_traj_list[[n]] <- ggplot(county_data_long[measure == "deaths" & date_std >= "2020-04-01" & region == i & region2 == ii & date_std %in% c(today, seq.Date(as.Date("2020-04-01"), today, 5))]) + 
+      geom_line(aes(x = date_std, y = value, group = Admin2, color = Admin2)) +
+      theme_bw()+
+     # ylim(0, 0.042*1000) + 
+          xlim(as.Date("2020-04-01"), today + 50)+
+      labs(x = "Date", y = "Total Confirmed Deaths", title = paste0(i,ii," ", c.state))+
+      theme(legend.position = "none", axis.text.x = element_text(angle = 90)) +
+      geom_text_repel(data = county_data_long[measure == "deaths" & date_std == max(date_std) & region == i & region2 == ii], aes(x = date_std, y = value, label = Admin2, color = Admin2), nudge_x = 25)
+  }
+}
+
+```
+
+## Regional Death Trends
+
+```{r, echo = F}
+print(gg_traj_list[[1]])
+```
+
+## Regional Death Trends
+
+```{r, echo = F}
+print(gg_traj_list[[2]])
+```
+
+## Regional Death Trends
+
+```{r, echo = F}
+print(gg_traj_list[[3]])
+```
+
+## Regional Death Trends
+
+```{r, echo = F}
+print(gg_traj_list[[4]])
+```
+
+## Regional Death Trends
+
+```{r, echo = F}
+print(gg_traj_list[[5]])
+```
+
+## Regional Death Trends
+
+```{r, echo = F}
+print(gg_traj_list[[6]])
+```
+
+```{r}
+#make sure variable is in order
+
+n <- 0
+gg_traj_list <- list()
+for(i in unique(county_data_long$region)){
+  for(ii in unique(county_data_long$region2)){
+    n <- n + 1
+    gg_traj_list[[n]] <- ggplot(county_data_long[measure == "deaths_rate" & date_std >= "2020-04-01" & region == i & region2 == ii & date_std %in% c(today, seq.Date(as.Date("2020-04-01"), today, 5))]) + 
+      geom_line(aes(x = date_std, y = value*1000, group = Admin2, color = Admin2)) +
+      theme_bw()+
+     # ylim(0, 0.042*1000) + 
+          xlim(as.Date("2020-04-01"), today + 50)+
+      labs(x = "Date", y = "Total Confirmed Deaths/1,000 People", title = paste0(i,ii," ", c.state))+
+      theme(legend.position = "none", axis.text.x = element_text(angle = 90)) +
+      geom_text_repel(data = county_data_long[measure == "deaths_rate" & date_std == max(date_std) & region == i & region2 == ii], aes(x = date_std, y = value*1000, label = Admin2, color = Admin2), nudge_x = 25)
+  }
+}
+
+```
+
+## Regional Death Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[1]])
+```
+
+## Regional Death Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[2]])
+```
+
+## Regional Death Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[3]])
+```
+
+## Regional Death Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[4]])
+```
+
+## Regional Death Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[5]])
+```
+
+## Regional Death Rate Trends
+
+```{r, echo = F}
+print(gg_traj_list[[6]])
+```
+
+## Development of New Laboratory-Confirmed Cases Over the Past 2 Months
 
 ```{r,echo = F, message = FALSE}
-#preserve max value for plotting
-county_data_long_shp[measure == "cases"]$value %>% max() -> max_value
-county_data_long_shp[measure == "cases"]$value %>% min() -> min_value
+county_data_long_shp <- merge(county_data_long, shp, 
+                              by.x = "FIPS", 
+                              by.y = "GEOID") %>% data.table()
 
-#create scale breaks
-c(min_value,100,1000,3000,max_value) -> scale_breaks
+#preserve max value for plotting
+county_data_long_shp[measure == "new_cases"]$mean_lag_value %>% max() -> max_value
+county_data_long_shp[measure == "new_cases"]$mean_lag_value %>% min() -> min_value
 
 # plot
-gg1anim <- ggplot(county_data_long_shp[measure == "cases" & date_std %in% seq.Date(today-61,today-1, 3) ]) +
-  geom_sf(aes(fill = value, geometry = geometry,group = seq_along(date_std)), lwd = .25) +
+gg1anim <- ggplot(county_data_long_shp[measure == "new_cases" & date_std %in% seq.Date(today-60,today, 3) ]) +
+  geom_sf(aes(fill = mean_lag_value, geometry = geometry), lwd = .25) +
   theme_classic() +
-  scale_fill_viridis_c(trans = scales::log10_trans(), breaks = scale_breaks,
-                       labels = scale_breaks,
+  scale_fill_viridis_c(trans = scales::pseudo_log_trans(),
                        limits = c(min_value, max_value))+
-  labs(fill = "Total Cases", x= "", y = "") +
+  labs(fill = "7-Day Average Laboratory-Confirmed Cases/Day", x= "", y = "") +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
         axis.line = element_blank(),
         legend.key.height = unit(3, "line")) +
-  geom_sf_text(aes(geometry = geometry, label = value),
+  geom_sf_text(aes(geometry = geometry, label = round(mean_lag_value)),
                color = "white",
                size = 2) +
+  labs(title = 'Date: {closest_state}')+
   transition_states(date_std,
                     transition_length = 0,
-                    state_length = .25) +
-  labs(title = 'Date: {closest_state}')
-animate(gg1anim)
+                    state_length = 1) 
+animate(gg1anim, end_pause = 20, duration = 20)
 
 
 ```
 
+
+## Development of New Laboratory-Confirmed Cases/1000 People Over the Past 2 Months
+
+```{r,echo = F, message = FALSE}
+county_data_long_shp <- merge(county_data_long, shp, 
+                              by.x = "FIPS", 
+                              by.y = "GEOID") %>% data.table()
+
+#preserve max value for plotting
+county_data_long_shp[measure == "new_cases_rate"]$mean_lag_value %>% max(., na.rm = T) -> max_value
+county_data_long_shp[measure == "new_cases_rate"]$mean_lag_value %>% min(., na.rm = T) -> min_value
+min_value <- min_value * 1000
+max_value <- max_value * 1000
+
+# plot
+gg1anim <- ggplot(county_data_long_shp[measure == "new_cases_rate" & date_std %in% seq.Date(today-60,today, 3) ]) +
+  geom_sf(aes(fill = mean_lag_value*1000, geometry = geometry), lwd = .25) +
+  theme_classic() +
+  scale_fill_viridis_c(trans = scales::pseudo_log_trans(),
+                       limits = c(min_value, max_value))+
+  labs(fill = "7-Day Average Laboratory-Confirmed Cases/Day/1000 People", x= "", y = "") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        legend.key.height = unit(3, "line")) +
+  geom_sf_text(aes(geometry = geometry, label = round(mean_lag_value*1000,3)),
+               color = "white",
+               size = 2) +
+  labs(title = 'Date: {closest_state}')+
+  transition_states(date_std,
+                    transition_length = 0,
+                    state_length = 1) 
+animate(gg1anim, end_pause = 20, duration = 20)
+
+
+```
+
+## Development of Covid-Attributable Over the Past 2 Months
+
+```{r,echo = F, message = FALSE}
+county_data_long_shp <- merge(county_data_long, shp, 
+                              by.x = "FIPS", 
+                              by.y = "GEOID") %>% data.table()
+
+#preserve max value for plotting
+county_data_long_shp[measure == "deaths"]$value %>% max() -> max_value
+county_data_long_shp[measure == "deaths"]$value %>% min() -> min_value
+
+# plot
+gg1anim <- ggplot(county_data_long_shp[measure == "deaths" & date_std %in% seq.Date(today-60,today, 3) ]) +
+  geom_sf(aes(fill = mean_lag_value, geometry = geometry), lwd = .25) +
+  theme_classic() +
+  scale_fill_viridis_c(trans = scales::pseudo_log_trans(),
+                       limits = c(min_value, max_value),
+                       option = "A")+
+  labs(fill = "Cumulative Deaths", x= "", y = "") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        legend.key.height = unit(3, "line")) +
+  geom_sf_text(aes(geometry = geometry, label = round(mean_lag_value)),
+               color = "green",
+               size = 2) +
+  labs(title = 'Date: {closest_state}')+
+  transition_states(date_std,
+                    transition_length = 0,
+                    state_length = 1) 
+animate(gg1anim, end_pause = 20, duration = 20)
+
+
+```
+
+
+## Development of Covid-Attributable Deaths/1000 People Over the Past 2 Months
+
+```{r,echo = F, message = FALSE}
+county_data_long_shp <- merge(county_data_long, shp, 
+                              by.x = "FIPS", 
+                              by.y = "GEOID") %>% data.table()
+
+#preserve max value for plotting
+county_data_long_shp[measure == "deaths_rate"]$value %>% max(., na.rm = T) -> max_value
+county_data_long_shp[measure == "deaths_rate"]$value %>% min(., na.rm = T) -> min_value
+min_value <- min_value * 1000
+max_value <- max_value * 1000
+
+# plot
+gg1anim <- ggplot(county_data_long_shp[measure == "deaths_rate" & date_std %in% seq.Date(today-60,today, 3) ]) +
+  geom_sf(aes(fill = mean_lag_value*1000, geometry = geometry), lwd = .25) +
+  theme_classic() +
+  scale_fill_viridis_c(trans = scales::pseudo_log_trans(),
+                       limits = c(min_value, max_value),
+                       option = "A")+
+  labs(fill = "Cumulative Deaths/1000 People", x= "", y = "") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        legend.key.height = unit(3, "line")) +
+  geom_sf_text(aes(geometry = geometry, label = round(mean_lag_value*1000,3)),
+               color = "green",
+               size = 2) +
+  labs(title = 'Date: {closest_state}')+
+  transition_states(date_std,
+                    transition_length = 0,
+                    state_length = 1) 
+animate(gg1anim, end_pause = 20, duration = 20)
+
+
+```
