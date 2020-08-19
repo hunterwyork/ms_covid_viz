@@ -1,0 +1,163 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  ignorenonframetext,
+]{beamer}
+\usepackage{pgfpages}
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamercolor{caption name}{fg=normal text.fg}
+\beamertemplatenavigationsymbolsempty
+% Prevent slide breaks in the middle of a paragraph
+\widowpenalties 1 10000
+\raggedbottom
+\setbeamertemplate{part page}{
+  \centering
+  \begin{beamercolorbox}[sep=16pt,center]{part title}
+    \usebeamerfont{part title}\insertpart\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{section page}{
+  \centering
+  \begin{beamercolorbox}[sep=12pt,center]{part title}
+    \usebeamerfont{section title}\insertsection\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{subsection page}{
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center]{part title}
+    \usebeamerfont{subsection title}\insertsubsection\par
+  \end{beamercolorbox}
+}
+\AtBeginPart{
+  \frame{\partpage}
+}
+\AtBeginSection{
+  \ifbibliography
+  \else
+    \frame{\sectionpage}
+  \fi
+}
+\AtBeginSubsection{
+  \frame{\subsectionpage}
+}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={MS\_Covid},
+  pdfauthor={Hunter York},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\newif\ifbibliography
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{MS\_Covid}
+\author{Hunter York}
+\date{7/23/2020}
+
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}[fragile]{Total Cases as of 2020-07-22}
+\protect\hypertarget{total-cases-as-of-2020-07-22}{}
+
+\begin{verbatim}
+## Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not
+## give correct results for longitude/latitude data
+\end{verbatim}
+
+\includegraphics{output_files/figure-beamer/unnamed-chunk-1-1.pdf}
+
+\end{frame}
+
+\begin{frame}[fragile]{Total Deaths Attributable to Covid as of
+2020-07-22}
+\protect\hypertarget{total-deaths-attributable-to-covid-as-of-2020-07-22}{}
+
+\begin{verbatim}
+## Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not
+## give correct results for longitude/latitude data
+\end{verbatim}
+
+\includegraphics{output_files/figure-beamer/unnamed-chunk-2-1.pdf}
+
+\end{frame}
+
+\begin{frame}[fragile]{Total Confirmed Cases of Covid per 1,000
+residents as of 2020-07-22}
+\protect\hypertarget{total-confirmed-cases-of-covid-per-1000-residents-as-of-2020-07-22}{}
+
+\begin{verbatim}
+## Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not
+## give correct results for longitude/latitude data
+\end{verbatim}
+
+\includegraphics{output_files/figure-beamer/unnamed-chunk-3-1.pdf}
+
+\end{frame}
+
+\begin{frame}[fragile]{Total Deaths Attributable to Covid per 1,000
+residents as of 2020-07-22}
+\protect\hypertarget{total-deaths-attributable-to-covid-per-1000-residents-as-of-2020-07-22}{}
+
+\begin{verbatim}
+## Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not
+## give correct results for longitude/latitude data
+\end{verbatim}
+
+\includegraphics{output_files/figure-beamer/unnamed-chunk-4-1.pdf}
+
+\end{frame}
+
+\hypertarget{recho-f-preserve-max-value-for-plotting-county_data_long_shpmeasure-cases-date_std-today-1value-max---max_value-county_data_long_shpmeasure-cases-date_std-today-1value-min---min_value-create-scale-breaks-cmin_value10010003000max_value---scale_breaks-plot-gg1anim---ggplotcounty_data_long_shpmeasure-cases-date_std-in-seq.datetoday-31today-1-30-geom_sfaesfill-value-geometry-geometry-lwd-.25-theme_classic-scale_fill_viridis_ctrans-scaleslog10_trans-breaks-scale_breaks-labels-scale_breaks-limits-cmin_value-max_value-labsfill-total-cases-x-y-themeaxis.text.x-element_blank-axis.text.y-element_blank-axis.ticks-element_blank-axis.line-element_blank-geom_sf_textaesgeometry-geometry-label-value-color-white-size-2-transition_statesadmin2-transition_length-2-state_length-1-ggtitlenow-showing-frame-of-nframes-gg1anim}{%
+\section{\texorpdfstring{\texttt{\{r,echo\ =\ F\}\ \#\ \#preserve\ max\ value\ for\ plotting\ \#\ county\_data\_long\_shp{[}measure\ ==\ "cases"\ \&\ date\_std\ ==\ today-1{]}\$value\ \%\textgreater{}\%\ max()\ -\textgreater{}\ max\_value\ \#\ county\_data\_long\_shp{[}measure\ ==\ "cases"\ \&\ date\_std\ ==\ today-1{]}\$value\ \%\textgreater{}\%\ min()\ -\textgreater{}\ min\_value\ \#\ \ \#\ \#create\ scale\ breaks\ \#\ c(min\_value,100,1000,3000,max\_value)\ -\textgreater{}\ scale\_breaks\ \#\ \ \#\ \#\ plot\ \#\ gg1anim\ \textless{}-\ ggplot(county\_data\_long\_shp{[}measure\ ==\ "cases"\ \&\ date\_std\ \%in\%\ seq.Date(today-31,today-1,\ 30){]})\ +\ \ \#\ \ \ geom\_sf(aes(fill\ =\ value,\ geometry\ =\ geometry),\ lwd\ =\ .25)\ +\ \ \#\ \ \ theme\_classic()\ +\ \#\ \ \ scale\_fill\_viridis\_c(trans\ =\ scales::log10\_trans(),\ breaks\ =\ scale\_breaks,\ \ \#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ labels\ =\ scale\_breaks,\ \#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ limits\ =\ c(min\_value,\ max\_value))+\ \#\ \ \ labs(fill\ =\ "Total\ Cases",\ x=\ "",\ y\ =\ "")\ +\ \#\ \ \ theme(axis.text.x\ =\ element\_blank(),\ \#\ \ \ \ \ \ \ \ \ axis.text.y\ =\ element\_blank(),\ \#\ \ \ \ \ \ \ \ \ axis.ticks\ =\ element\_blank(),\ \#\ \ \ \ \ \ \ \ \ axis.line\ =\ element\_blank())\ +\ \#\ \ \ geom\_sf\_text(aes(geometry\ =\ geometry,\ label\ =\ value),\ \ \#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ color\ =\ "white",\ \ \#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\ =\ 2)\ +\ \ \#\ \ \ transition\_states(Admin2,\ \#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ transition\_length\ =\ 2,\ \#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ state\_length\ =\ 1)\ +\ \ \#\ \ \ ggtitle("Now\ showing\ \{frame\}\ of\ \{nframes\}")\ \#\ gg1anim\ \#\ \ \#\ \ \#}}{\{r,echo = F\} \# \#preserve max value for plotting \# county\_data\_long\_shp{[}measure == "cases" \& date\_std == today-1{]}\$value \%\textgreater\% max() -\textgreater{} max\_value \# county\_data\_long\_shp{[}measure == "cases" \& date\_std == today-1{]}\$value \%\textgreater\% min() -\textgreater{} min\_value \#  \# \#create scale breaks \# c(min\_value,100,1000,3000,max\_value) -\textgreater{} scale\_breaks \#  \# \# plot \# gg1anim \textless- ggplot(county\_data\_long\_shp{[}measure == "cases" \& date\_std \%in\% seq.Date(today-31,today-1, 30){]}) +  \#   geom\_sf(aes(fill = value, geometry = geometry), lwd = .25) +  \#   theme\_classic() + \#   scale\_fill\_viridis\_c(trans = scales::log10\_trans(), breaks = scale\_breaks,  \#                        labels = scale\_breaks, \#                        limits = c(min\_value, max\_value))+ \#   labs(fill = "Total Cases", x= "", y = "") + \#   theme(axis.text.x = element\_blank(), \#         axis.text.y = element\_blank(), \#         axis.ticks = element\_blank(), \#         axis.line = element\_blank()) + \#   geom\_sf\_text(aes(geometry = geometry, label = value),  \#                color = "white",  \#                size = 2) +  \#   transition\_states(Admin2, \#                     transition\_length = 2, \#                     state\_length = 1) +  \#   ggtitle("Now showing \{frame\} of \{nframes\}") \# gg1anim \#  \#  \#}}\label{recho-f-preserve-max-value-for-plotting-county_data_long_shpmeasure-cases-date_std-today-1value-max---max_value-county_data_long_shpmeasure-cases-date_std-today-1value-min---min_value-create-scale-breaks-cmin_value10010003000max_value---scale_breaks-plot-gg1anim---ggplotcounty_data_long_shpmeasure-cases-date_std-in-seq.datetoday-31today-1-30-geom_sfaesfill-value-geometry-geometry-lwd-.25-theme_classic-scale_fill_viridis_ctrans-scaleslog10_trans-breaks-scale_breaks-labels-scale_breaks-limits-cmin_value-max_value-labsfill-total-cases-x-y-themeaxis.text.x-element_blank-axis.text.y-element_blank-axis.ticks-element_blank-axis.line-element_blank-geom_sf_textaesgeometry-geometry-label-value-color-white-size-2-transition_statesadmin2-transition_length-2-state_length-1-ggtitlenow-showing-frame-of-nframes-gg1anim}}
+
+\end{document}
