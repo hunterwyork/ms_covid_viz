@@ -112,7 +112,7 @@ county_data_long_shp <- merge(county_data_long, shp,
                               by.y = "GEOID") %>% data.table()
 ```
 
-## Total Cases as of `r today`
+## Total Laboratory-Confirmed & Reported Cases as of `r today`
 
 ```{r, echo = F, message = FALSE}
 #preserve max value for plotting
@@ -173,7 +173,7 @@ print(gg2)
 
 ```
 
-## Total Confirmed Cases of Covid per 1,000 residents as of `r today`
+## Total Laboratory-Confirmed Cases of Covid per 1,000 residents as of `r today`
 
 ```{r, echo = F, message = FALSE}
 #preserve max value for plotting
@@ -690,3 +690,22 @@ animate(gg1anim, end_pause = 20, duration = 20)
 
 
 ```
+
+## Graphs by County
+
+```{r echo = FALSE, results ='asis'}
+county_data_long[measure == "new_cases", measure_neat := "New Laboratory-Confirmed Cases Per Day\nLagged 7-Day Average"]
+county_data_long[measure == "cases", measure_neat := "Total Laboratory-Confirmed Cases"]
+county_data_long[measure == "new_deaths", measure_neat := "New Covid-Attributable Deaths Per Day\nLagged 7-Day Average"]
+county_data_long[measure == "deaths", measure_neat := "Total Covid-Attributable Deaths"]
+county_data_long[measure %in% c("deaths", "cases"), value_graph := value]
+county_data_long[!measure %in% c("deaths", "cases"), value_graph := mean_lag_value]
+
+for(c.county in unique(county_data_long$Admin2)){
+  cat('\n## County Diagnostic Plot: ', c.county, '\n')
+  ggg <- ggplot(county_data_long[Admin2 == c.county & date_std %in% seq.Date(today-60,today, 1) & measure %in% c("new_cases", "new_deaths", "cases", "deaths")]) + geom_line(aes(x = date_std, y = value_graph)) + facet_wrap(~measure_neat, scales = "free_y") +
+    geom_hline(yintercept = 0, linetype = "dotted")+
+    theme_bw() + labs(x = "Date", y = "Value")
+  print(ggg)
+  cat('\n')
+}
