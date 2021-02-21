@@ -38,13 +38,13 @@ c.state <- "Mississippi"
 # create today variable dependent on the time of day
 if (Sys.time() %>% 
     substr(12, 13) %>% 
-    as.numeric >= 20){
-  today <-  Sys.Date() %>% as.Date()-1} else {
-    today <-  Sys.Date() %>% as.Date()-2
+    as.numeric >= 23){
+  today <-  Sys.Date() %>% as.Date()} else {
+    today <-  Sys.Date() %>% as.Date()-1
   }
 
 #beginning date can go back to April 12
-beginning_date <- "2020-06-01" %>% as.Date()
+beginning_date <- "2020-09-01" %>% as.Date()
 
 # download death data
 "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv" %>%
